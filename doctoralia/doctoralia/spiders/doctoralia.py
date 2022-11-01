@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from statistics import StatisticsError, mode
 
 from scrapy.spiders import Spider
@@ -31,7 +32,18 @@ class Doctoralia(Spider):
         # parse_doctor callback for each of them.
         dr_page_links = rx('//div[@class="media"]/div[@class="pr-1"]//@href')
         links = [l for l in dr_page_links.getall() if '/clinicas/' not in l]
-        yield from rf(links, self.parse_doctor)
+
+        with open('/home/miguel/Code/Doctoralia/doctoralia/doctoralia/skip_urls.txt', 'r') as f:
+            lines = [l.strip() for l in f.readlines()]
+
+            def get_links():
+                for u in links:
+                    p = Path(u)
+                    name = p.parts[2]
+                    if name not in lines:
+                        yield str(p)
+
+            yield from rf(list(get_links()), self.parse_doctor)
 
     def parse_doctor(self, response):
         """Parses the response, extracting the scraped psychologist data as dicts."""
