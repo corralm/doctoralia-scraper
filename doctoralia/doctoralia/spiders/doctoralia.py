@@ -33,17 +33,19 @@ class Doctoralia(Spider):
         dr_page_links = rx('//div[@class="media"]/div[@class="pr-1"]//@href')
         links = [l for l in dr_page_links.getall() if '/clinicas/' not in l]
 
+        # skip if the url has been previously scraped
         with open('/home/miguel/Code/Doctoralia/doctoralia/doctoralia/skip_urls.txt', 'r') as f:
             lines = [l.strip() for l in f.readlines()]
 
             def get_links():
+                flinks = []
                 for u in links:
                     p = Path(u)
                     name = p.parts[2]
                     if name not in lines:
-                        yield str(p)
-
-            yield from rf(list(get_links()), self.parse_doctor)
+                        flinks.append(u)
+                return flinks
+            yield from rf(get_links(), self.parse_doctor)
 
     def parse_doctor(self, response):
         """Parses the response, extracting the scraped psychologist data as dicts."""
@@ -52,6 +54,8 @@ class Doctoralia(Spider):
         zr = rx('//script')[6]
         # Google Tag Manager
         gr = rx('//script')[8]
+
+        # optional 'doctor_id' check
 
         def parse_price(self, response):
             """Returns most common price from services provided."""
